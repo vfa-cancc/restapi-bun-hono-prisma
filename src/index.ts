@@ -1,9 +1,26 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
 
-const app = new Hono()
+//import routes
+import { PostRoute, UserRoute } from "./routes";
+import { errorHandler, notFound } from "./middlewares/errorMiddlewares";
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+// Initialize the Hono app
+const app = new Hono().basePath("/api");
 
-export default app
+// Posts Routes
+app.route("/posts", PostRoute);
+app.route("/users", UserRoute);
+
+// Not Found Handler
+app.notFound((c) => {
+  const error = notFound(c);
+  return error;
+});
+
+// Error Handler
+app.onError((err, c) => {
+  const error = errorHandler(c);
+  return error;
+});
+
+export default app;
