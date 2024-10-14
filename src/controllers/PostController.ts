@@ -77,7 +77,7 @@ export async function getPostById(c: Context) {
   try {
     const postId = parseInt(c.req.param("id"));
 
-    const post = await db.select().from(posts).where(eq(posts.id, postId));
+    const [post] = await db.select().from(posts).where(eq(posts.id, postId));
 
     if (!post) {
       return c.json(
@@ -143,9 +143,9 @@ export async function deletePost(c: Context) {
   try {
     const postId = parseInt(c.req.param("id"));
 
-    const deletedRows = await db.delete(posts).where(eq(posts.id, postId));
+    const [deletedRows] = await db.delete(posts).where(eq(posts.id, postId));
 
-    if (deletedRows[0].affectedRows === 0) {
+    if (deletedRows.affectedRows === 0) {
       return c.json(
         {
           success: false,
