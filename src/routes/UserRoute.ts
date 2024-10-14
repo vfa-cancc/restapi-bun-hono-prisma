@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { UserController } from "../controllers";
 import { isAdmin, protect } from "../middlewares/authMiddlewares";
-import { USERS_ROLE } from "@prisma/client";
+import { USERS_ROLE } from "../../drizzle/schema";
 
 //initialize router
 type Variables = { jwtPayload: any };

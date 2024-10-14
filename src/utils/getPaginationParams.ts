@@ -9,5 +9,5 @@ export const getPaginationParams = (query: {
   const skip = (pageInt - 1) * limitInt;
   const take = limitInt || 10;
 
-  return { skip, take, page: pageInt, limit };
+  return { skip, limit: take, page: pageInt };
 };

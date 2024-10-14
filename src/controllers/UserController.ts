@@ -1,7 +1,9 @@
 import { Context } from "hono";
-import prisma from "../../prisma/client";
 import { USERS_ROLE } from "@prisma/client";
-import { genToken } from "../utils";
+import { genToken, getPaginationParams } from "../utils";
+import db from "../db";
+import { users } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * @api {post} /users Create User
@@ -19,9 +21,12 @@ export const createUser = async (c: Context) => {
 
   try {
     // Check for existing user
-    const userExists = await prisma.users.findFirst({ where: { email } });
-    if (userExists) {
-      return c.json({ message: "User already exists" }, 400);
+    const userExists = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    if (userExists.length) {
+      return c.json({ success: false, message: "User already exists" }, 400);
     }
 
     const bcryptHash = await Bun.password.hash(password, {
@@ -30,14 +35,14 @@ export const createUser = async (c: Context) => {
     });
 
     // Create user
-    const user = await prisma.users.create({
-      data: {
-        fullname,
-        email,
-        password: bcryptHash,
-        role,
-      },
+    await db.insert(users).values({
+      fullname,
+      email,
+      password: bcryptHash,
+      role,
     });
+
+    const [user] = await db.select().from(users).where(eq(users.email, email));
 
     return c.json(
       {
@@ -65,7 +70,11 @@ export const createUser = async (c: Context) => {
 export const loginUser = async (c: Context) => {
   const { email, password } = await c.req.json();
 
-  const user = await prisma.users.findFirst({ where: { email } });
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .execute();
   if (!user) {
     c.status(401);
     throw new Error("No user found with this email");
@@ -102,7 +111,27 @@ export const loginUser = async (c: Context) => {
  * @access Private
  */
 export const getUsers = async (c: Context) => {
-  const users = await prisma.users.findMany();
+  // pagination
+  const { skip, limit, page } = getPaginationParams(c.req.query());
+  const allUsers = await db.select().from(users).limit(limit).offset(skip);
 
-  return c.json({ users });
+  const allUsersMap = allUsers.map((user) => ({
+    id: user.id,
+    fullname: user.fullname,
+    email: user.email,
+    role: user.role,
+  }));
+
+  return c.json(
+    {
+      success: true,
+      message: "List Users!",
+      pagging: {
+        page: page,
+        limit: limit,
+      },
+      data: allUsersMap,
+    },
+    200
+  );
 };

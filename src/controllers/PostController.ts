@@ -1,20 +1,24 @@
 import { Context } from "hono";
-
-import prisma from "../../prisma/client";
 import { getPaginationParams } from "../utils";
+import db from "../db";
+import { desc, asc, count, sql, eq } from "drizzle-orm";
+import { posts } from "../../drizzle/schema";
 
 /**
  * Getting all posts
  */
 export const getPosts = async (c: Context) => {
   try {
-    const { page, limit, skip, take } = getPaginationParams(c.req.query());
+    const { page, skip, limit } = getPaginationParams(c.req.query());
 
-    const posts = await prisma.post.findMany({
-      orderBy: { id: "desc" },
-      skip: skip,
-      take: take,
-    });
+    const allPosts = await db
+      .select()
+      .from(posts)
+      .orderBy(desc(posts.id))
+      .limit(limit)
+      .offset(skip);
+
+    const totalPosts = await db.select({ count: count() }).from(posts);
 
     return c.json(
       {
@@ -23,9 +27,9 @@ export const getPosts = async (c: Context) => {
         pagging: {
           page: page,
           limit: limit,
-          total: await prisma.post.count(),
+          total: totalPosts[0]?.count || 0,
         },
-        data: posts,
+        data: allPosts,
       },
       200
     );
@@ -40,13 +44,18 @@ export const getPosts = async (c: Context) => {
 export async function createPost(c: Context) {
   try {
     const { title, content } = await c.req.json();
-
-    const post = await prisma.post.create({
-      data: {
-        title: title,
-        content: content,
-      },
+    const id = 1;
+    const [newPost] = await db.insert(posts).values({
+      title,
+      content,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
+
+    const post = await db
+      .select()
+      .from(posts)
+      .where(eq(posts.id, newPost.insertId));
 
     return c.json(
       {
@@ -68,9 +77,7 @@ export async function getPostById(c: Context) {
   try {
     const postId = parseInt(c.req.param("id"));
 
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-    });
+    const post = await db.select().from(posts).where(eq(posts.id, postId));
 
     if (!post) {
       return c.json(
@@ -104,20 +111,23 @@ export async function updatePost(c: Context) {
 
     const { title, content } = await c.req.json();
 
-    const post = await prisma.post.update({
-      where: { id: postId },
-      data: {
+    const [post] = await db
+      .update(posts)
+      .set({
         title: title,
         content: content,
         updatedAt: new Date(),
-      },
-    });
+      })
+      .where(eq(posts.id, postId));
+
+    if (post.affectedRows === 0) {
+      return c.json({ success: false, message: "Post Not Found!" }, 404);
+    }
 
     return c.json(
       {
         success: true,
         message: "Post Updated Successfully!",
-        data: post,
       },
       200
     );
@@ -133,9 +143,17 @@ export async function deletePost(c: Context) {
   try {
     const postId = parseInt(c.req.param("id"));
 
-    await prisma.post.delete({
-      where: { id: postId },
-    });
+    const deletedRows = await db.delete(posts).where(eq(posts.id, postId));
+
+    if (deletedRows[0].affectedRows === 0) {
+      return c.json(
+        {
+          success: false,
+          message: "Post Not Found!",
+        },
+        404
+      );
+    }
 
     return c.json(
       {

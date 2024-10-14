@@ -1,6 +1,6 @@
-import { USERS_ROLE } from "@prisma/client";
 import { Context, Next } from "hono";
 import { jwt } from "hono/jwt";
+import { USERS_ROLE } from "../../drizzle/schema";
 
 export const protect = async (c: Context, next: Next) => {
   const jwtMiddleware = jwt({
@@ -12,7 +12,10 @@ export const protect = async (c: Context, next: Next) => {
 // Check if user is admin
 export const isAdmin = async (c: Context, next: Next) => {
   const user = c.get("jwtPayload");
-  if (user && user.role === USERS_ROLE.ADMIN) {
+  if (
+    (user && user.role === USERS_ROLE.ADMIN) ||
+    user.role === USERS_ROLE.ROOT
+  ) {
     await next();
   } else {
     c.status(403);
