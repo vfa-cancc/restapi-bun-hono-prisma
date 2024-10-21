@@ -1,12 +1,25 @@
 {
-  "name": "bun-hono-rest-api",
+  "name": "hono-bun-restapi",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "migration:generate": "drizzle-kit generate",
+    "migration:run": "drizzle-kit migrate",
+    "test:e2e": "bun test _tests/e2e/*.test.ts"
   },
   "dependencies": {
-    "hono": "^4.6.3"
+    "@hono/swagger-ui": "^0.4.1",
+    "@hono/zod-validator": "^0.2.2",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.34.1",
+    "hono": "^4.6.5",
+    "mysql2": "^3.11.3"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/jest": "^29.5.13",
+    "drizzle-kit": "^0.25.0",
+    "node-fetch": "^3.3.2",
+    "tsx": "^4.19.1"
   }
 }
