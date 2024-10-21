@@ -7,7 +7,6 @@ import { eq } from "drizzle-orm";
 
 /**
  * @api {post} /users Create User
- * @apiGroup Users
  * @access Public
  */
 export const createUser = async (c: Context) => {
@@ -64,8 +63,10 @@ export const createUser = async (c: Context) => {
 
 /**
  * @api {post} /users/login Login User
- * @apiGroup Users
  * @access Public
+ * @param {string} email User email
+ * @param {string} password User password
+ * @returns {object} User data and token
  */
 export const loginUser = async (c: Context) => {
   const { email, password } = await c.req.json();
@@ -107,8 +108,10 @@ export const loginUser = async (c: Context) => {
 
 /**
  * @api {get} /users Get Users
- * @apiGroup Users
  * @access Private
+ * @param {number} page Page number
+ * @param {number} limit Number of items per page
+ * @returns {object} List of users
  */
 export const getUsers = async (c: Context) => {
   // pagination
@@ -134,4 +137,40 @@ export const getUsers = async (c: Context) => {
     },
     200
   );
+};
+
+// delete user
+/**
+ * @api {delete} /users/:id Delete User
+ * @access Private
+ * @param {number} id User ID
+ * @returns {object} Message
+ */
+export const deleteUser = async (c: Context) => {
+  const { id } = c.req.param();
+
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, parseInt(id)))
+    .execute();
+  if (!user) {
+    return c.json({ success: false, message: "User not found" }, 404);
+  }
+
+  const [deletedRows] = await db
+    .delete(users)
+    .where(eq(users.id, parseInt(id)));
+
+  if (deletedRows.affectedRows === 0) {
+    return c.json(
+      {
+        success: false,
+        message: "User not found!",
+      },
+      404
+    );
+  }
+
+  return c.json({ success: true, message: "User deleted successfully!" });
 };

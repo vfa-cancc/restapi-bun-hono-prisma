@@ -22,6 +22,7 @@ const paginationSchema = z.object({
 // routes
 posts.get(
   "/",
+  protect,
   zValidator("query", paginationSchema, (result, c) => {
     if (!result.success) {
       return c.json(
@@ -58,7 +59,7 @@ posts.post(
   (c) => PostController.createPost(c)
 );
 
-posts.get("/:id", (c) => PostController.getPostById(c));
+posts.get("/:id", protect, (c) => PostController.getPostById(c));
 
 posts.patch(
   "/:id", // validate request

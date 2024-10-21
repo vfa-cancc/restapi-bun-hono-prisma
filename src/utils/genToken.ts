@@ -2,7 +2,11 @@ import { sign } from "hono/jwt";
 
 const JWT_SECRET = Bun.env.JWT_SECRET || "";
 
-const genToken = async (user: { id: number; email: string; role: any }) => {
+export const genToken = async (user: {
+  id: number;
+  email: string;
+  role: any;
+}) => {
   // Create payload
   const payload = {
     id: user.id,
@@ -15,5 +19,3 @@ const genToken = async (user: { id: number; email: string; role: any }) => {
   const token = await sign(payload, JWT_SECRET, "HS256");
   return token;
 };
-
-export default genToken;

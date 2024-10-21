@@ -63,4 +63,7 @@ userRoute.post(
 // get all users
 userRoute.get("/", protect, isAdmin, UserController.getUsers);
 
+// delete user
+userRoute.delete("/:id", protect, isAdmin, UserController.deleteUser);
+
 export const UserRoute = userRoute;
