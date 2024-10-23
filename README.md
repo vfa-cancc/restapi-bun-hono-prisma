@@ -1,6 +1,6 @@
 # Hono REST API Startkit
 
-Using Hono + Mysql + Prisma on Bun runtime
+Using Hono + Mysql + Drizzle ORM on Bun runtime
 
 ### Bun runtime
 
@@ -19,7 +19,7 @@ bun install
 To run:
 
 ```sh
-bun run dev
+bun dev
 ```
 
 open http://localhost:3000
@@ -34,8 +34,23 @@ cp .env.example .env
 
 ### Migrations
 
-Then run the migration and seed scripts:
+For Migration generate
+
+- Update file drizzle/schema.ts
+- Then run
 
 ```bash
-bunx prisma migrate dev
+bun migration:generate
+```
+
+Run the migration and seed scripts:
+
+```bash
+bun migration:run
+```
+
+Seed
+
+```bash
+bun src/db/seed.ts
 ```
